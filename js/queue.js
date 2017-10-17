@@ -1,15 +1,13 @@
-var win = loader.args.win;
-var queue = loader.args.queue;
 var menuBar = {
 	
 };
-queue.open = function() {
-	queue.window = new explorer.window()
+loader.args.queue.open = function() {
+	loader.args.queue.win = new explorer.window()
 	.title('YouTube Sync - Queue')
 	.icon(loader.folder+'../img/icon.png')
 	.resize(200, 360)
 	.center('', 264, -100)
-	.closeWith(win)
 	.controls([]);
-	queue.window.menuBar(menuBar);
+	var win = loader.args.queue.win;
+	win.menuBar(menuBar);
 }

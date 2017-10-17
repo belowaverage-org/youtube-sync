@@ -1,27 +1,24 @@
 var settings = {};
 var queue = {};
-var credentials = {
-	login: {},
-	token: ''
-};
+var token = '';
+var login = {};
 var player = {};
 var jqFrame = {};
 var youtube = {};
+var main = function() {};
 var win = {};
 var isFullScreen = false;
-$.getJSON(loader.folder+'config.json', function(settings) {
-	settiongs = settings;
-	system.loader(loader.folder+'js/login.js', {settings: settings, credentials: credentials, win: win});
-});
-function main() {
+main = function() {
+	queue.open();
 	win = new explorer.window()
 	.title('YouTube Sync - Playback')
 	.icon(loader.folder+'img/icon.png')
 	.resize(500, 360)
 	.center('', -100, -100);
-	system.loader(loader.folder+'js/queue.js', {queue: queue, win: win}, function() {
-		queue.open();
-	});
+	win.on.close = function() {
+		login.win.close();
+		queue.win.close();
+	}
 	function toggleFullScreen() {
 		win.toggleMax();
 		if(win.is.maximized) {
@@ -88,10 +85,10 @@ function main() {
 					title: 'Show queue...',
 					icon: loader.folder+'img/que.png',
 					callback: function() {
-						if(queue.window.is.closed) {
+						if(queue.win.is.closed) {
 							queue.open();
 						} else {
-							queue.window.toggleMin();
+							queue.win.toggleMin();
 						}
 					}
 				}, {
@@ -248,3 +245,18 @@ function main() {
 		});
 	});
 }
+$.getJSON(loader.folder+'config.json', function(data) {
+	settings = data;
+	system.loader(loader.folder+'js/login.js', {
+		settings: settings,
+		token: token,
+		win: win,
+		main: main,
+		login: login
+	}, function() {
+		if(token == '') {
+			login.open();
+		}
+	});
+});
+system.loader(loader.folder+'js/queue.js', {queue: queue, win: win});
