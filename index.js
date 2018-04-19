@@ -5,10 +5,10 @@ var login = {};
 var player = {};
 var jqFrame = {};
 var youtube = {};
-var main = function() {};
 var win = {};
+var buffering = false;
 var isFullScreen = false;
-main = function() {
+function main() {
 	queue.open();
 	win = new explorer.window()
 	.title('YouTube Sync - Playback')
@@ -18,48 +18,6 @@ main = function() {
 	win.on.close = function() {
 		login.win.close();
 		queue.win.close();
-	}
-	function toggleFullScreen() {
-		win.toggleMax();
-		if(win.is.maximized) {
-			explorer.toggleFullScreen(true);
-		} else {
-			explorer.toggleFullScreen(false);
-		}
-	}
-	function changeVideo(id) {
-		player.source({
-			type: 'video',
-			sources: [{
-				src: id,
-				type: 'youtube'
-			}]
-		});
-	}
-	function updateQuality() {
-		win.mBar[2].context[0].context = [];
-		$.each(youtube.getAvailableQualityLevels(), function() {
-			var quality = this;
-			var icon = icon = '';
-			if(youtube.getPlaybackQuality() == quality) {
-				icon = loader.folder+'img/bull.png';
-			}
-			win.mBar[2].context[0].context.push({
-				title: quality,
-				icon: icon,
-				callback: function() {
-					youtube.setPlaybackQuality(quality);
-					$.each(win.mBar[2].context[0].context, function() {
-						if(this.title == quality) {
-							this.icon = loader.folder+'img/bull.png';
-						} else {
-							this.icon = '';
-						}
-					});
-				}
-			});
-			
-		});
 	}
 	win.front();
 	win.mBar = [
@@ -74,7 +32,7 @@ main = function() {
 				}, {
 					title: 'Test',
 					callback: function() {
-						changeVideo('IBfQXYe0-Lc');
+						changeVideo('MrtTEkwvdYY');
 					}
 				}
 			]
@@ -223,27 +181,87 @@ main = function() {
 	`);
 	win.body.find('*:not(style)').remove();
 	var iframe = $('<iframe src="'+loader.folder+'plyr/plyr.html"></iframe>').appendTo(win.body);
-	iframe.on('load', function() { //Player Setup
+	iframe.on('load', function() {
 		jqFrame = iframe.contents();
 		player = iframe[0].contentWindow.player;
-		youtube = player.getEmbed();
-		window.player = iframe[0].contentWindow.player;
+		fScreenButt = jqFrame.find('button[data-plyr=fullscreen]');
+		fScreenButt[0].outerHTML = fScreenButt[0].outerHTML;
 		jqFrame.find('button[data-plyr=fullscreen]').click(function(e) {
 			toggleFullScreen();
 		});
 		player.on('ready', function() {
-			var firstFire = true;
 			youtube = player.getEmbed();
-			player.play();
-			player.on('playing', function(e) {
-				if(firstFire) {
-					player.stop();
-					updateQuality();
-					firstFire = false;
-				}
-			});
+			seekTo();
+		});
+		player.on('seeking', function() {
+			if(!buffering) {
+				seekTo();
+			}
 		});
 	});
+}
+function toggleFullScreen() {
+	win.toggleMax();
+	if(win.is.maximized) {
+		explorer.toggleFullScreen(true);
+	} else {
+		explorer.toggleFullScreen(false);
+	}
+}
+function changeVideo(id) {
+	player.source({
+		type: 'video',
+		sources: [{
+			src: id,
+			type: 'youtube'
+		}]
+	});
+}
+function seekTo() {
+	buffering = true;
+	currentTime = player.getCurrentTime();
+	console.log(currentTime);
+	youtube.seekTo(currentTime, true);
+	console.log('Buffering...');
+	var buffInt = setInterval(function() {
+		youtube.playVideo();
+		if(!player.isPaused()) {
+			console.log('Done buffering!');
+			player.pause();
+			youtube.seekTo(currentTime, true);
+			clearInterval(buffInt);
+			buffering = false;
+		}
+	}, 50);
+}
+function updateQuality() {
+	win.mBar[2].context[0].context = [];
+	$.each(youtube.getAvailableQualityLevels(), function() {
+		var quality = this;
+		var icon = icon = '';
+		if(youtube.getPlaybackQuality() == quality) {
+			icon = loader.folder+'img/bull.png';
+		}
+		win.mBar[2].context[0].context.push({
+			title: quality,
+			icon: icon,
+			callback: function() {
+				youtube.setPlaybackQuality(quality);
+				$.each(win.mBar[2].context[0].context, function() {
+					if(this.title == quality) {
+						this.icon = loader.folder+'img/bull.png';
+					} else {
+						this.icon = '';
+					}
+				});
+			}
+		});
+		
+	});
+}
+function playerCanPlay() {
+	console.log('Player is ready to play!');
+	player.play();
 }
 $.getJSON(loader.folder+'config.json', function(data) {
 	settings = data;
