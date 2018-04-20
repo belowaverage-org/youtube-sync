@@ -5,6 +5,7 @@ var login = {};
 var player = {};
 var jqFrame = {};
 var youtube = {};
+var seekCounter = 0;
 var win = {};
 var buffering = false;
 var isFullScreen = false;
@@ -33,6 +34,11 @@ function main() {
 					title: 'Test',
 					callback: function() {
 						changeVideo('MrtTEkwvdYY');
+					}
+				}, {
+					title: 'Test2',
+					callback: function() {
+						changeVideo('LwkrXybZ1uo');
 					}
 				}
 			]
@@ -184,19 +190,25 @@ function main() {
 	iframe.on('load', function() {
 		jqFrame = iframe.contents();
 		player = iframe[0].contentWindow.player;
-		fScreenButt = jqFrame.find('button[data-plyr=fullscreen]');
-		fScreenButt[0].outerHTML = fScreenButt[0].outerHTML;
-		jqFrame.find('button[data-plyr=fullscreen]').click(function(e) {
-			toggleFullScreen();
-		});
 		player.on('ready', function() {
+			console.log('Player is ready!');
+			fScreenButt = jqFrame.find('button[data-plyr=fullscreen]');
+			fScreenButt[0].outerHTML = fScreenButt[0].outerHTML;
+			jqFrame.find('button[data-plyr=fullscreen]').click(function(e) {
+				toggleFullScreen();
+			});
 			youtube = player.getEmbed();
 			seekTo();
 		});
 		player.on('seeking', function() {
-			if(!buffering) {
-				seekTo();
-			}
+			seekCounter++;
+			var myCount = seekCounter;
+			setTimeout(function() {
+				if(seekCounter == myCount) {
+					seekTo();
+					seekCounter = 0;
+				}
+			}, 100);
 		});
 	});
 }
@@ -218,21 +230,27 @@ function changeVideo(id) {
 	});
 }
 function seekTo() {
-	buffering = true;
-	currentTime = player.getCurrentTime();
-	console.log(currentTime);
-	youtube.seekTo(currentTime, true);
-	console.log('Buffering...');
-	var buffInt = setInterval(function() {
-		youtube.playVideo();
-		if(!player.isPaused()) {
-			console.log('Done buffering!');
-			player.pause();
-			youtube.seekTo(currentTime, true);
-			clearInterval(buffInt);
-			buffering = false;
-		}
-	}, 50);
+	if(!buffering) {
+		buffering = true;
+		var currentTime = player.getCurrentTime();
+		youtube.seekTo(currentTime, true);
+		console.log('Buffering...');
+		var buffInt = setInterval(function() {
+			youtube.playVideo();
+			if(youtube.getPlayerState() == 1) {
+				console.log('Done buffering!');
+				youtube.pauseVideo();
+				youtube.seekTo(currentTime, true);
+				clearInterval(buffInt);
+				buffering = false;
+			}
+			if(youtube.getDuration() == 0) {
+				console.log('Cannot buffer empty video!');
+				clearInterval(buffInt);
+				buffering = false;
+			}
+		}, 50);
+	}
 }
 function updateQuality() {
 	win.mBar[2].context[0].context = [];
