@@ -43,6 +43,29 @@ function main() {
 				}
 			]
 		}, {
+			title: 'Settings',
+			context: [
+				{
+					title: 'Ignore Mode',
+					icon: loader.folder+'img/ebox.png',
+					callback: function() {
+						toggleSetting(0, 'ignoreMode');
+					}
+				}, {
+					title: 'Offline Mode',
+					icon: loader.folder+'img/ebox.png',
+					callback: function() {
+						toggleSetting(1, 'offlineMode');
+					}
+				}, {
+					title: 'Debug Mode',
+					icon: loader.folder+'img/ebox.png',
+					callback: function() {
+						toggleSetting(2, 'debugMode');
+					}
+				}
+			]
+		}, {
 			title: 'View',
 			context: [
 				{
@@ -212,6 +235,9 @@ function main() {
 		});
 	});
 }
+function toggleSetting(pos, setting) {
+	
+}
 function toggleFullScreen() {
 	win.toggleMax();
 	if(win.is.maximized) {
@@ -274,7 +300,6 @@ function updateQuality() {
 				});
 			}
 		});
-		
 	});
 }
 function playerCanPlay() {
