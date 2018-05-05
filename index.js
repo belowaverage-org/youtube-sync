@@ -9,6 +9,7 @@ var seekCounter = 0;
 var win = {};
 var buffering = false;
 var isFullScreen = false;
+var regPath = 'HKEY_LOCAL_WEBDOWS/software/belowaverage-org/youtube-sync/';
 function main() {
 	queue.open();
 	win = new explorer.window()
@@ -170,7 +171,10 @@ function main() {
 				}
 			]
 		}
-	]
+	];
+	updateSetting(0, 'ignoreMode');
+	updateSetting(1, 'offlineMode');
+	updateSetting(2, 'debugMode');
 	win.menuBar(win.mBar);
 	win.body.html(`
 		<style>
@@ -235,8 +239,22 @@ function main() {
 		});
 	});
 }
-function toggleSetting(pos, setting) {
-	
+function updateSetting(pos, setting) {
+	var val = system.registry.get(regPath+setting);
+	var ico = 'chec';
+	if(val == 0 || val == undefined) {
+		ico = 'ebox';
+	}
+	win.mBar[1].context[pos].icon = loader.folder+'img/'+ico+'.png';
+}
+function toggleSetting(pos, setting, readOnly) {
+	var val = system.registry.get(regPath+setting);
+	var update = 0;
+	if(val == 0 || val == undefined) {
+		update = 1;
+	}
+	system.registry.set(regPath+setting, update);
+	updateSetting(pos, setting);
 }
 function toggleFullScreen() {
 	win.toggleMax();
@@ -279,7 +297,7 @@ function seekTo() {
 	}
 }
 function updateQuality() {
-	win.mBar[2].context[0].context = [];
+	win.mBar[1].context[0].context = [];
 	$.each(youtube.getAvailableQualityLevels(), function() {
 		var quality = this;
 		var icon = icon = '';

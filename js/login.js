@@ -16,46 +16,6 @@ loader.args.login.open = function() {
 		}
 	};
 	iframe.on('load', function() {
-		var form = $(iframe[0].contentDocument);
-		form.find('#li').click(function() {
-			$.ajax({
-				global: false,
-				url: 'https://api.belowaverage.org/v1/AUTH/',
-				method: 'POST',
-				data: {
-					username: form.find('input[name=username]').val(),
-					password: form.find('input[name=password]').val()
-				},
-				success: function(token) {
-					loader.args.token = token;
-					setTimeout(function() {
-						win.close();
-					}, 100);
-				},
-				error: function() {
-					setTimeout(function() {
-						iframe[0].contentWindow.fadeOff();
-						var count = 0;
-						var offset = 0;
-						var negate = false;
-						var interval = 0;
-						while(count++ < 110) {
-							setTimeout(function() {
-								if(interval++ == 10) {
-									interval = 0;
-									negate = !negate;
-								}
-								if(negate) {
-									offset++;
-								} else {
-									offset--;
-								}
-								win.center('', offset, 0);
-							}, count * 8);
-						}
-					}, 3000);
-				}
-			});
-		});
+		iframe[0].contentWindow.postMessage();
 	});
 };
